@@ -164,7 +164,7 @@ footer{text-align:center;padding:1.5rem;font-size:12px;color:#B0A89A;border-top:
 <div class="hero">
   <div class="hero-label">Family Trip · August 2026</div>
   <h1>Sicilia <em>bella</em></h1>
-  <p class="hero-sub">16 – 25 augustus · 6 personen · Terrasini · Huurauto</p>
+  <p class="hero-sub">16 – 25 augustus · 6 personen · Terrasini</p>
 </div>
 
 <div class="who-bar">
@@ -200,7 +200,7 @@ footer{text-align:center;padding:1.5rem;font-size:12px;color:#B0A89A;border-top:
     <div class="accom-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 13c1.66 0 3-1.34 3-3S8.66 7 7 7s-3 1.34-3 3 1.34 3 3 3zm12-6h-8v7H3V5H1v15h2v-3h18v3h2v-9c0-2.21-1.79-4-4-4z"/></svg></div>
     <div class="accom-details">
       <h3>Terrasini, Palermo Province</h3>
-      <p>Via Palermo 113, 90049 Terrasini PA</p>
+      <p><a href="https://maps.google.com/?q=Via+Palermo+113+Terrasini+PA" target="_blank" style="color:#1A5C7A;text-decoration:underline;font-size:13px;">Via Palermo 113, 90049 Terrasini PA</a></p>
       <div class="accom-dates">
         <div class="di"><div class="dl">Check-in</div><div class="dv">Zo 16 aug · vanaf 15:00</div></div>
         <div class="di"><div class="dl">Check-out</div><div class="dv">Di 25 aug · voor 10:00</div></div>
@@ -233,7 +233,11 @@ footer{text-align:center;padding:1.5rem;font-size:12px;color:#B0A89A;border-top:
     <label>Tijdstip (optioneel)</label>
     <input type="text" id="actTime" placeholder="bijv. 20:00">
     <label>Notities / details</label>
-    <textarea id="actNotes" placeholder="Adres, reservering, tips..."></textarea>
+    <textarea id="actNotes" placeholder="Reservering, tips..."></textarea>
+    <label>Adres (optioneel)</label>
+    <input type="text" id="actAddress" placeholder="bijv. Via Roma 12, Palermo">
+    <label>Wie gaan er mee?</label>
+    <div class="person-btns" id="modalWieMee"></div>
     <label>Toegevoegd door</label>
     <div class="person-btns" id="modalPersonBtns"></div>
     <div class="modal-footer">
@@ -274,6 +278,7 @@ var state = { activities: {}, dayTitles: {} };
 var activeDay = 'd0';
 var activePerson = null;
 var modalPerson = '';
+var modalWieMee = [];
 var pollTimer = null;
 
 // ─── JSONBin API ─────────────────────────────────────────────────────────────
@@ -429,12 +434,27 @@ function makeActCard(a, dayId) {
   div.className = 'act-card';
   div.style.cssText = 'background:' + m.light + ';border-color:' + m.color + '66;color:' + m.dark;
   var inner = '';
-  inner += '<button class="act-del-btn" style="color:' + m.dark + '" onclick="deleteActivity(\'' + dayId + '\',' + a.id + ')">✕</button>';
+  // Only maker can delete
+  if (activePerson && activePerson === a.person) {
+    inner += '<button class="act-del-btn" style="color:' + m.dark + '" onclick="deleteActivity(\'' + dayId + '\',' + a.id + ')" title="Verwijderen">✕</button>';
+  }
   if (a.time) inner += '<div class="act-time">' + esc(a.time) + '</div>';
   inner += '<div class="act-title">' + esc(a.title) + '</div>';
   if (a.notes) inner += '<div class="act-notes">' + esc(a.notes) + '</div>';
+  if (a.address) {
+    var mapsUrl = 'https://maps.google.com/?q=' + encodeURIComponent(a.address);
+    inner += '<div class="act-address"><a href="' + mapsUrl + '" target="_blank" style="color:' + m.dark + ';font-size:12px;display:inline-flex;align-items:center;gap:4px;margin-top:5px;text-decoration:underline;opacity:.85;">📍 ' + esc(a.address) + '</a></div>';
+  }
   inner += '<div class="act-footer">';
   if (a.person) inner += '<span class="act-person-tag" style="background:' + m.color + '">' + esc(a.person) + '</span>';
+  // wieMee tags
+  if (a.wieMee && a.wieMee.length > 0) {
+    a.wieMee.forEach(function(name) {
+      if (name === a.person) return;
+      var wm = MEMBERS.find(function(x){ return x.name === name; });
+      if (wm) inner += '<span class="act-person-tag" style="background:' + wm.color + '99;color:#fff">' + esc(name) + '</span>';
+    });
+  }
   inner += '<button class="act-edit-btn" style="border-color:' + m.color + '55;color:' + m.dark + '" onclick="openEdit(\'' + dayId + '\',' + a.id + ')">✏ Bewerken</button>';
   inner += '</div>';
   div.innerHTML = inner;
@@ -450,6 +470,9 @@ function openAdd(dayId) {
   document.getElementById('actTitle').value = '';
   document.getElementById('actTime').value = '';
   document.getElementById('actNotes').value = '';
+  document.getElementById('actAddress').value = '';
+  modalWieMee = [];
+  buildModalWieMee();
   modalPerson = activePerson;
   buildModalPersonBtns();
   document.getElementById('modalBg').classList.add('open');
@@ -464,12 +487,34 @@ function openEdit(dayId, id) {
   document.getElementById('actTitle').value = a.title;
   document.getElementById('actTime').value = a.time || '';
   document.getElementById('actNotes').value = a.notes || '';
+  document.getElementById('actAddress').value = a.address || '';
+  modalWieMee = a.wieMee || [];
+  buildModalWieMee();
   modalPerson = a.person || '';
   buildModalPersonBtns();
   document.getElementById('modalBg').classList.add('open');
 }
 function closeModal() {
   document.getElementById('modalBg').classList.remove('open');
+}
+function buildModalWieMee() {
+  var c2 = document.getElementById('modalWieMee');
+  if (!c2) return;
+  c2.innerHTML = '';
+  MEMBERS.forEach(function(m) {
+    var b = document.createElement('button');
+    b.className = 'person-btn';
+    b.textContent = m.name;
+    var sel = modalWieMee.indexOf(m.name) !== -1;
+    if (sel) b.style.cssText = 'background:' + m.color + ';border-color:' + m.color + ';color:#fff';
+    b.onclick = function() {
+      var idx = modalWieMee.indexOf(m.name);
+      if (idx === -1) modalWieMee.push(m.name);
+      else modalWieMee.splice(idx, 1);
+      buildModalWieMee();
+    };
+    c2.appendChild(b);
+  });
 }
 function buildModalPersonBtns() {
   var c = document.getElementById('modalPersonBtns');
@@ -494,13 +539,14 @@ function saveActivity() {
   var editId = parseInt(document.getElementById('modalEditId').value) || null;
   var time = document.getElementById('actTime').value.trim();
   var notes = document.getElementById('actNotes').value.trim();
+  var address = document.getElementById('actAddress').value.trim();
   if (!state.activities[dayId]) state.activities[dayId] = [];
   if (editId) {
     state.activities[dayId] = state.activities[dayId].map(function(a){
-      return a.id === editId ? { id:a.id, title:title, time:time, notes:notes, person:modalPerson } : a;
+      return a.id === editId ? { id:a.id, title:title, time:time, notes:notes, address:address, wieMee:modalWieMee.slice(), person:modalPerson } : a;
     });
   } else {
-    state.activities[dayId].push({ id:Date.now(), title:title, time:time, notes:notes, person:modalPerson });
+    state.activities[dayId].push({ id:Date.now(), title:title, time:time, notes:notes, address:address, wieMee:modalWieMee.slice(), person:modalPerson });
   }
   closeModal();
   renderActiveDay();
@@ -541,7 +587,7 @@ function arrivalHTML() {
     + '<div class="day-title-row"><h2>Amsterdam → Terrasini</h2></div>'
     + '<div class="day-sub">Zondag 16 augustus</div>'
     + '<div class="flight-block"><div class="fbl">Vlucht HV5227 · Transavia · PNR: UFUBVG</div><div class="fbr"><div><div class="fbt">18:55</div><div class="fbm">AMS</div></div><div class="fba">→</div><div><div class="fbt">21:30</div><div class="fbm">PMO</div></div><div style="margin-left:auto;font-size:12px;color:rgba(255,255,255,.38)">2u 35m</div></div></div>'
-    + '<div class="transfer"><div class="tr"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg><span>Schiphol: aanwezig uiterlijk 16:55 (2u voor vertrek)</span></div><div class="tr"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99z"/></svg><span>Na landing: huurauto ophalen → ~30 min rijden naar Terrasini via A29</span></div><div class="tr"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span>Check-in: vanaf 15:00 — aankomst verwacht ~22:30</span></div></div>'
+    + '<div class="transfer"><div class="tr"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg><span>Schiphol: aanwezig uiterlijk 16:55 (2u voor vertrek)</span></div><div class="tr"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99z"/></svg><span>Na landing: taxi of transfer naar Terrasini (~30 min)</span></div><div class="tr"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span>Check-in: vanaf 15:00 — aankomst verwacht ~22:30</span></div></div>'
     + '<div id="acts-d0"></div>'
     + '<button class="add-btn" id="addbtn-d0" style="display:none" onclick="openAdd(\'d0\')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>Activiteit of notitie toevoegen</button>'
     + '<div class="no-who" id="nowho-d0">Kies eerst je naam bovenaan om iets toe te voegen.</div>';
@@ -570,7 +616,7 @@ function departureHTML() {
     + '<div class="day-sub">Dinsdag 25 augustus</div>'
     + '<div class="warning"><strong>Let op:</strong> Check-out is om 10:00, maar je vlucht vertrekt om 09:10. Vertrek rond 05:45. Regel dit de avond tevoren — bagage en sleutels van tevoren afgeven aan de host.</div>'
     + '<div class="flight-block"><div class="fbl">Vlucht HV5230 · Transavia · PNR: UFUBVG</div><div class="fbr"><div><div class="fbt">09:10</div><div class="fbm">PMO</div></div><div class="fba">→</div><div><div class="fbt">12:00</div><div class="fbm">AMS</div></div><div style="margin-left:auto;font-size:12px;color:rgba(255,255,255,.38)">2u 50m</div></div></div>'
-    + '<div class="transfer"><div class="tr"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg><span>Vertrek accommodatie: ~05:45</span></div><div class="tr"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99z"/></svg><span>Huurauto inleveren + inchecken: aanwezig om ~07:00</span></div><div class="tr"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg><span>Aankomst Amsterdam Schiphol: 12:00</span></div></div>'
+    + '<div class="transfer"><div class="tr"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg><span>Vertrek accommodatie: ~05:45</span></div><div class="tr"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99z"/></svg><span>Inchecken: aanwezig op luchthaven om ~07:00</span></div><div class="tr"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg><span>Aankomst Amsterdam Schiphol: 12:00</span></div></div>'
     + '<div id="acts-d9"></div>'
     + '<button class="add-btn" id="addbtn-d9" style="display:none" onclick="openAdd(\'d9\')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>Notitie toevoegen</button>'
     + '<div class="no-who" id="nowho-d9">Kies eerst je naam bovenaan om iets toe te voegen.</div>';
