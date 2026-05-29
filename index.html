@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sicilië 2026 — Reisplanner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --sand:#F5F0E8;
+  --sand-dark:#E8E0D0;
+  --terra:#C4622D;
+  --terra-light:#F0D4C4;
+  --terra-dark:#8B3D18;
+  --olive:#5C6B3A;
+  --olive-light:#DCE4C8;
+  --sea:#1A5C7A;
+  --sea-light:#D0E8F4;
+  --purple:#7B4F9E;
+  --purple-light:#EAD9F7;
+  --purple-dark:#4E2E6B;
+  --charcoal:#2C2C2A;
+  --muted:#6B6660;
+  --white:#fff;
+  --radius:10px;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--sand);color:var(--charcoal);min-height:100vh;font-size:15px;line-height:1.6;}
+
+.hero{background:var(--charcoal);color:var(--white);padding:2.5rem 1.5rem 1.75rem;text-align:center;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(45deg,transparent,transparent 30px,rgba(196,98,45,0.06) 30px,rgba(196,98,45,0.06) 31px);}
+.hero-label{font-size:11px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--terra-light);margin-bottom:.6rem;position:relative;}
+.hero h1{font-family:'Cormorant Garamond',serif;font-size:clamp(2.2rem,6vw,3.5rem);font-weight:500;line-height:1.1;position:relative;margin-bottom:.4rem;}
+.hero h1 em{font-style:italic;color:var(--terra-light);}
+.hero-sub{font-size:13px;color:rgba(255,255,255,.55);position:relative;}
+
+.who-bar{background:var(--charcoal);border-top:1px solid rgba(255,255,255,.1);padding:.9rem 1.5rem;}
+.who-label{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.35);text-align:center;margin-bottom:.6rem;}
+.who-pills{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
+.who-pill{padding:6px 18px;border-radius:20px;border:1.5px solid rgba(255,255,255,.2);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:rgba(255,255,255,.75);background:rgba(255,255,255,.07);transition:all .15s;}
+
+.flight-bar{background:var(--charcoal);border-top:1px solid rgba(255,255,255,.1);padding:.85rem 1.5rem;}
+.flight-row-label{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.3);text-align:center;margin-bottom:.5rem;}
+.flight-grid{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:1rem;max-width:480px;margin:0 auto;}
+.fe{text-align:center;}
+.fe .t{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:500;color:var(--white);line-height:1;}
+.fe .m{font-size:11px;color:rgba(255,255,255,.45);margin-top:2px;}
+.fl{text-align:center;}
+.fl .rl{display:flex;align-items:center;gap:4px;justify-content:center;margin-bottom:3px;}
+.fl .rl span{height:1px;flex:1;background:rgba(255,255,255,.22);}
+.fl .dur{font-size:11px;color:rgba(255,255,255,.38);}
+
+.accom-wrap{padding:1.25rem 1.5rem .5rem;}
+.accom-card{background:var(--white);border-radius:var(--radius);padding:1.1rem 1.25rem;border:1px solid var(--sand-dark);display:flex;gap:1rem;align-items:flex-start;}
+.accom-icon{width:38px;height:38px;border-radius:8px;background:var(--terra-light);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--terra-dark);}
+.accom-icon svg{width:18px;height:18px;}
+.accom-details h3{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:500;margin-bottom:3px;}
+.accom-details p{font-size:13px;color:var(--muted);}
+.accom-dates{margin-top:8px;display:flex;gap:20px;}
+.accom-dates .di .dl{font-size:11px;font-weight:500;color:var(--muted);}
+.accom-dates .di .dv{font-size:12px;color:var(--charcoal);}
+
+.sec-title{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:500;color:var(--charcoal);padding:1.25rem 1.5rem .5rem;display:flex;align-items:center;gap:.5rem;}
+.sec-title svg{width:17px;height:17px;color:var(--terra);flex-shrink:0;}
+
+.day-nav{display:flex;overflow-x:auto;gap:6px;padding:0 1.5rem .75rem;scrollbar-width:none;}
+.day-nav::-webkit-scrollbar{display:none;}
+.day-btn{flex-shrink:0;padding:7px 13px;border-radius:20px;border:1px solid var(--sand-dark);background:var(--white);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--muted);transition:all .15s;white-space:nowrap;}
+.day-btn.active{background:var(--terra);border-color:var(--terra);color:var(--white);font-weight:500;}
+
+.day-panel{display:none;padding:1rem 1.5rem 2rem;}
+.day-panel.active{display:block;}
+.day-badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:500;margin-bottom:8px;letter-spacing:.04em;}
+.badge-arrival{background:var(--terra-light);color:var(--terra-dark);}
+.badge-free{background:var(--olive-light);color:var(--olive);}
+.badge-departure{background:var(--sand-dark);color:var(--muted);}
+
+.day-title-row{display:flex;align-items:center;gap:8px;margin-bottom:3px;}
+.day-title-row h2{font-family:'Cormorant Garamond',serif;font-size:1.7rem;font-weight:500;line-height:1.2;flex:1;}
+.edit-title-btn{background:none;border:none;cursor:pointer;color:#C0B8B0;padding:4px;border-radius:6px;display:flex;}
+.edit-title-btn:hover{color:var(--terra);}
+.edit-title-btn svg{width:14px;height:14px;}
+.day-sub{font-size:13px;color:var(--muted);margin-bottom:1rem;}
+.title-edit-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
+.title-edit-row input{font-family:'Cormorant Garamond',serif;font-size:1.4rem;border:1.5px solid var(--terra);border-radius:8px;padding:4px 10px;background:var(--sand);color:var(--charcoal);outline:none;flex:1;}
+.title-edit-row button{background:var(--terra);border:none;border-radius:8px;padding:6px 14px;color:var(--white);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;}
+
+.flight-block{background:var(--charcoal);border-radius:var(--radius);padding:1rem 1.25rem;margin-bottom:1rem;}
+.flight-block .fbl{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.38);margin-bottom:.5rem;}
+.flight-block .fbr{display:flex;align-items:center;gap:10px;color:var(--white);}
+.flight-block .fbt{font-family:'Cormorant Garamond',serif;font-size:1.35rem;font-weight:500;line-height:1;}
+.flight-block .fba{color:var(--terra);font-size:14px;}
+.flight-block .fbm{font-size:11px;color:rgba(255,255,255,.38);margin-top:3px;}
+
+.transfer{background:var(--white);border-radius:var(--radius);padding:.9rem 1.1rem;border:1px solid var(--sand-dark);margin-bottom:1rem;}
+.transfer .tr{display:flex;align-items:flex-start;gap:9px;font-size:13px;color:var(--muted);}
+.transfer .tr+.tr{margin-top:6px;}
+.transfer .tr svg{width:14px;height:14px;color:var(--terra);flex-shrink:0;margin-top:2px;}
+
+.warning{background:var(--terra-light);border-radius:var(--radius);padding:.9rem 1.1rem;border:1px solid #D4946C;margin-bottom:1rem;font-size:13px;color:var(--terra-dark);line-height:1.6;}
+
+.empty-day{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem 1rem;text-align:center;border:1.5px dashed var(--sand-dark);border-radius:var(--radius);background:var(--white);}
+.empty-day svg{width:30px;height:30px;color:#D8D0C4;margin-bottom:.65rem;}
+.empty-day p{font-size:13px;color:var(--muted);line-height:1.6;}
+
+.act-card{border-radius:var(--radius);padding:.85rem 1rem;margin-bottom:.55rem;position:relative;border:1px solid;}
+.act-time{font-size:11px;font-weight:500;opacity:.65;margin-bottom:2px;}
+.act-title{font-size:14px;font-weight:500;padding-right:22px;}
+.act-notes{font-size:13px;opacity:.8;margin-top:4px;line-height:1.5;}
+.act-footer{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap;}
+.act-person-tag{font-size:11px;font-weight:500;padding:2px 9px;border-radius:10px;color:var(--white);}
+.act-edit-btn{font-size:12px;background:none;border:1px solid rgba(0,0,0,.12);border-radius:6px;padding:2px 8px;cursor:pointer;font-family:'DM Sans',sans-serif;opacity:.7;}
+.act-edit-btn:hover{opacity:1;}
+.act-del-btn{position:absolute;top:8px;right:8px;background:none;border:none;cursor:pointer;font-size:15px;opacity:.4;padding:2px 5px;line-height:1;}
+.act-del-btn:hover{opacity:1;}
+
+.add-btn{display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:var(--radius);border:1.5px dashed var(--sand-dark);background:transparent;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--muted);width:100%;margin-top:1rem;transition:all .15s;}
+.add-btn:hover{border-color:var(--terra);color:var(--terra);}
+.add-btn svg{width:14px;height:14px;flex-shrink:0;}
+.no-who{background:var(--terra-light);border-radius:var(--radius);padding:.75rem 1rem;font-size:13px;color:var(--terra-dark);margin-top:1rem;}
+
+.divider{height:1px;background:var(--sand-dark);margin:0 1.5rem 1rem;}
+.status-bar{text-align:center;font-size:11px;padding:.3rem;min-height:1.4rem;color:var(--muted);}
+.status-bar.saving{color:var(--terra);}
+.status-bar.ok{color:var(--olive);}
+
+footer{text-align:center;padding:1.5rem;font-size:12px;color:#B0A89A;border-top:1px solid var(--sand-dark);}
+
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.42);z-index:200;align-items:flex-end;justify-content:center;}
+.modal-bg.open{display:flex;}
+.modal{background:var(--white);border-radius:16px 16px 0 0;padding:1.5rem;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;}
+.modal h3{font-family:'Cormorant Garamond',serif;font-size:1.35rem;font-weight:500;margin-bottom:1rem;}
+.modal label{display:block;font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;margin-top:14px;}
+.modal input,.modal textarea{width:100%;padding:9px 12px;border:1px solid var(--sand-dark);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;background:var(--sand);color:var(--charcoal);outline:none;}
+.modal input:focus,.modal textarea:focus{border-color:var(--terra);}
+.modal textarea{min-height:66px;resize:vertical;}
+.person-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
+.person-btn{padding:6px 16px;border-radius:16px;border:1.5px solid var(--sand-dark);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:var(--muted);background:var(--white);transition:all .12s;}
+.modal-footer{display:flex;gap:10px;margin-top:1.25rem;}
+.btn-cancel{flex:1;padding:10px;border-radius:8px;border:1px solid var(--sand-dark);background:transparent;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--muted);}
+.btn-save{flex:2;padding:10px;border-radius:8px;border:none;background:var(--terra);color:var(--white);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;}
+
+@media(max-width:480px){.hero h1{font-size:2.2rem;}.fe .t{font-size:1.3rem;}.day-title-row h2{font-size:1.5rem;}}
+
+.pin-overlay{position:fixed;inset:0;background:#2C2C2A;z-index:999;display:flex;align-items:center;justify-content:center;}
+.pin-overlay.hidden{display:none;}
+.pin-box{background:#F5F0E8;border-radius:16px;padding:2.5rem 2rem;text-align:center;width:90%;max-width:340px;}
+.pin-box h2{font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:500;color:#2C2C2A;margin-bottom:.3rem;}
+.pin-box p{font-size:13px;color:#6B6660;margin-bottom:1.5rem;}
+.pin-dots{display:flex;justify-content:center;gap:12px;margin-bottom:1.5rem;}
+.pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid #C4622D;background:transparent;transition:background .15s;}
+.pin-dot.filled{background:#C4622D;}
+.pin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:240px;margin:0 auto;}
+.pin-key{padding:14px;border-radius:10px;border:1px solid #E8E0D0;background:#fff;font-family:'DM Sans',sans-serif;font-size:1.2rem;font-weight:500;color:#2C2C2A;cursor:pointer;transition:all .1s;}
+.pin-key:hover{background:#F0D4C4;border-color:#C4622D;}
+.pin-key:active{transform:scale(.95);}
+.pin-key.del{font-size:.9rem;color:#6B6660;}
+.pin-error{color:#C4622D;font-size:13px;margin-top:.75rem;min-height:1.2rem;}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-label">Family Trip · August 2026</div>
+  <h1>Sicilia <em>bella</em></h1>
+  <p class="hero-sub">16 – 25 augustus · 6 personen · Terrasini · Huurauto</p>
+</div>
+
+<div class="who-bar">
+  <div class="who-label">Wie ben jij? Kies je naam om activiteiten toe te voegen</div>
+  <div class="who-pills" id="whoPills"></div>
+</div>
+
+<div class="flight-bar">
+  <div class="flight-row-label">Heenvlucht · HV5227 · Transavia · Economy</div>
+  <div class="flight-grid">
+    <div class="fe"><div class="t">18:55</div><div class="m">AMS · Amsterdam</div></div>
+    <div class="fl">
+      <div class="rl"><span></span><svg width="14" height="14" viewBox="0 0 24 24" fill="#C4622D"><path d="M3.5 19h17v2h-17zm17.5-9.3c-.1-.7-.8-1.2-1.5-1l-4.7 1.3L9 4.5 7.5 4l2.4 6.2-4.6 1.3-1.5-1.8L2.5 10l1.7 4.3 16-4.5c.7-.2 1-.9.8-1.6z"/></svg><span></span></div>
+      <div class="dur">2u 35m</div>
+    </div>
+    <div class="fe"><div class="t">21:30</div><div class="m">PMO · Palermo</div></div>
+  </div>
+</div>
+<div class="flight-bar" style="padding-top:.7rem">
+  <div class="flight-row-label">Terugvlucht · HV5230 · Transavia · Economy</div>
+  <div class="flight-grid">
+    <div class="fe"><div class="t">09:10</div><div class="m">PMO · Palermo</div></div>
+    <div class="fl">
+      <div class="rl"><span></span><svg width="14" height="14" viewBox="0 0 24 24" fill="#C4622D"><path d="M3.5 19h17v2h-17zm17.5-9.3c-.1-.7-.8-1.2-1.5-1l-4.7 1.3L9 4.5 7.5 4l2.4 6.2-4.6 1.3-1.5-1.8L2.5 10l1.7 4.3 16-4.5c.7-.2 1-.9.8-1.6z"/></svg><span></span></div>
+      <div class="dur">2u 50m</div>
+    </div>
+    <div class="fe"><div class="t">12:00</div><div class="m">AMS · Amsterdam</div></div>
+  </div>
+</div>
+
+<div class="accom-wrap">
+  <div class="accom-card">
+    <div class="accom-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 13c1.66 0 3-1.34 3-3S8.66 7 7 7s-3 1.34-3 3 1.34 3 3 3zm12-6h-8v7H3V5H1v15h2v-3h18v3h2v-9c0-2.21-1.79-4-4-4z"/></svg></div>
+    <div class="accom-details">
+      <h3>Terrasini, Palermo Province</h3>
+      <p>Via Palermo 113, 90049 Terrasini PA</p>
+      <div class="accom-dates">
+        <div class="di"><div class="dl">Check-in</div><div class="dv">Zo 16 aug · vanaf 15:00</div></div>
+        <div class="di"><div class="dl">Check-out</div><div class="dv">Di 25 aug · voor 10:00</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="divider" style="margin-top:1rem"></div>
+
+<div class="sec-title">
+  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>
+  Dag voor dag
+</div>
+
+<div class="day-nav" id="dayNav"></div>
+<div class="status-bar" id="statusBar"></div>
+<div id="dayPanels"></div>
+
+<div class="divider"></div>
+<footer>Sicilië 2026 · 16–25 augustus · Joeri, Natalia, Julian & Stella<br>Kies je naam bovenaan en voeg activiteiten toe — iedereen ziet hetzelfde</footer>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h3 id="modalTitle">Activiteit toevoegen</h3>
+    <input type="hidden" id="modalDay">
+    <input type="hidden" id="modalEditId">
+    <label>Titel</label>
+    <input type="text" id="actTitle" placeholder="bijv. Diner bij Ristorante Marina">
+    <label>Tijdstip (optioneel)</label>
+    <input type="text" id="actTime" placeholder="bijv. 20:00">
+    <label>Notities / details</label>
+    <textarea id="actNotes" placeholder="Adres, reservering, tips..."></textarea>
+    <label>Toegevoegd door</label>
+    <div class="person-btns" id="modalPersonBtns"></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal()">Annuleren</button>
+      <button class="btn-save" onclick="saveActivity()">Opslaan</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── CONFIG — vervang deze drie waarden in een teksteditor ──────────────────
+var JSONBIN_MASTER_KEY = '$2a$10$WWrJhlr5kmzA6Xt0zXS.EueZ/e9VfqL4iT0zqCIZf/Xflyn38FQQu';
+var JSONBIN_BIN_ID     = '6a19b41a21f9ee59d29a648e';
+var PIN_CODE           = '0406';   // bijv. '2608' — kies zelf 4 cijfers
+// ────────────────────────────────────────────────────────────────────────────
+
+var MEMBERS = [
+  { name: 'Joeri',   color: '#C4622D', light: '#F0D4C4', dark: '#8B3D18' },
+  { name: 'Natalia', color: '#1A5C7A', light: '#D0E8F4', dark: '#0C3D52' },
+  { name: 'Julian',  color: '#5C6B3A', light: '#DCE4C8', dark: '#3A4425' },
+  { name: 'Stella',  color: '#7B4F9E', light: '#EAD9F7', dark: '#4E2E6B' },
+];
+
+var DAYS = [
+  { id:'d0', label:'16 aug', type:'arrival' },
+  { id:'d1', label:'17 aug', type:'free', defaultTitle:'Maandag 17 augustus',   sub:'Eerste volle dag' },
+  { id:'d2', label:'18 aug', type:'free', defaultTitle:'Dinsdag 18 augustus' },
+  { id:'d3', label:'19 aug', type:'free', defaultTitle:'Woensdag 19 augustus' },
+  { id:'d4', label:'20 aug', type:'free', defaultTitle:'Donderdag 20 augustus' },
+  { id:'d5', label:'21 aug', type:'free', defaultTitle:'Vrijdag 21 augustus' },
+  { id:'d6', label:'22 aug', type:'free', defaultTitle:'Zaterdag 22 augustus' },
+  { id:'d7', label:'23 aug', type:'free', defaultTitle:'Zondag 23 augustus' },
+  { id:'d8', label:'24 aug', type:'free', defaultTitle:'Maandag 24 augustus',   sub:'Laatste volle dag' },
+  { id:'d9', label:'25 aug', type:'departure' },
+];
+
+var state = { activities: {}, dayTitles: {} };
+var activeDay = 'd0';
+var activePerson = null;
+var modalPerson = '';
+var pollTimer = null;
+
+// ─── JSONBin API ─────────────────────────────────────────────────────────────
+function apiHeaders() {
+  return { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_MASTER_KEY, 'X-Bin-Meta': 'false' };
+}
+function loadFromCloud(callback) {
+  fetch('https://api.jsonbin.io/v3/b/' + JSONBIN_BIN_ID + '/latest', { headers: apiHeaders() })
+    .then(function(r){ return r.json(); })
+    .then(function(d){ state = d || { activities:{}, dayTitles:{} }; if(!state.activities) state.activities={}; if(!state.dayTitles) state.dayTitles={}; callback && callback(); })
+    .catch(function(){ callback && callback(); });
+}
+function saveToCloud(callback) {
+  setStatus('saving');
+  fetch('https://api.jsonbin.io/v3/b/' + JSONBIN_BIN_ID, {
+    method: 'PUT',
+    headers: apiHeaders(),
+    body: JSON.stringify(state)
+  }).then(function(){ setStatus('ok'); callback && callback(); })
+    .catch(function(){ setStatus('error'); });
+}
+function startPolling() {
+  pollTimer = setInterval(function(){
+    loadFromCloud(function(){ renderActiveDay(); });
+  }, 10000);
+}
+
+// ─── Status ──────────────────────────────────────────────────────────────────
+function setStatus(s) {
+  var el = document.getElementById('statusBar');
+  el.className = 'status-bar ' + s;
+  if (s === 'saving') el.textContent = 'Opslaan...';
+  else if (s === 'ok') { el.textContent = '✓ Opgeslagen'; setTimeout(function(){ el.textContent=''; el.className='status-bar'; }, 2000); }
+  else if (s === 'error') el.textContent = 'Fout bij opslaan';
+  else el.textContent = '';
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+function init() {
+  buildWhoPills();
+  buildDayNav();
+  buildDayPanels();
+  loadFromCloud(function(){
+    renderActiveDay();
+    startPolling();
+  });
+}
+
+// ─── Who pills ───────────────────────────────────────────────────────────────
+function buildWhoPills() {
+  var c = document.getElementById('whoPills');
+  MEMBERS.forEach(function(m) {
+    var b = document.createElement('button');
+    b.className = 'who-pill';
+    b.textContent = m.name;
+    b.style.cssText = 'border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.75);background:rgba(255,255,255,.07)';
+    b.onclick = function() { togglePerson(m.name); };
+    b.id = 'who-' + m.name;
+    c.appendChild(b);
+  });
+}
+function togglePerson(name) {
+  activePerson = (activePerson === name) ? null : name;
+  MEMBERS.forEach(function(m) {
+    var b = document.getElementById('who-' + m.name);
+    if (activePerson === m.name) {
+      b.style.cssText = 'background:' + m.color + ';border-color:' + m.color + ';color:#fff';
+    } else {
+      b.style.cssText = 'border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.75);background:rgba(255,255,255,.07)';
+    }
+  });
+}
+
+// ─── Day nav ─────────────────────────────────────────────────────────────────
+function buildDayNav() {
+  var nav = document.getElementById('dayNav');
+  DAYS.forEach(function(d) {
+    var b = document.createElement('button');
+    b.className = 'day-btn' + (d.id === activeDay ? ' active' : '');
+    b.textContent = d.label;
+    b.onclick = function() { showDay(d.id); };
+    b.id = 'nav-' + d.id;
+    nav.appendChild(b);
+  });
+}
+function showDay(id) {
+  document.querySelectorAll('.day-panel').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelectorAll('.day-btn').forEach(function(b){ b.classList.remove('active'); });
+  activeDay = id;
+  document.getElementById('panel-' + id).classList.add('active');
+  document.getElementById('nav-' + id).classList.add('active');
+  renderActiveDay();
+}
+
+// ─── Build day panels (structure only) ───────────────────────────────────────
+function buildDayPanels() {
+  var c = document.getElementById('dayPanels');
+  DAYS.forEach(function(d) {
+    var div = document.createElement('div');
+    div.className = 'day-panel' + (d.id === activeDay ? ' active' : '');
+    div.id = 'panel-' + d.id;
+    if (d.type === 'arrival')    div.innerHTML = arrivalHTML();
+    if (d.type === 'free')       div.innerHTML = freeDayHTML(d);
+    if (d.type === 'departure')  div.innerHTML = departureHTML();
+    c.appendChild(div);
+  });
+}
+
+// ─── Render activities for active day ────────────────────────────────────────
+function renderActiveDay() {
+  var d = DAYS.find(function(x){ return x.id === activeDay; });
+  var panel = document.getElementById('panel-' + activeDay);
+
+  // Update day title if free day
+  if (d.type === 'free') {
+    var titleEl = document.getElementById('title-' + activeDay);
+    if (titleEl) titleEl.textContent = state.dayTitles[activeDay] || d.defaultTitle;
+  }
+
+  // Render activities
+  var container = document.getElementById('acts-' + activeDay);
+  if (!container) return;
+  var acts = sorted(activeDay);
+  container.innerHTML = '';
+  acts.forEach(function(a) {
+    container.appendChild(makeActCard(a, activeDay));
+  });
+
+  // Empty state
+  var empty = document.getElementById('empty-' + activeDay);
+  if (empty) empty.style.display = acts.length > 0 ? 'none' : 'flex';
+
+  // Add button
+  var addBtn = document.getElementById('addbtn-' + activeDay);
+  var noWho = document.getElementById('nowho-' + activeDay);
+  if (addBtn) addBtn.style.display = activePerson ? 'flex' : 'none';
+  if (noWho) noWho.style.display = activePerson ? 'none' : 'block';
+}
+
+function sorted(dayId) {
+  var acts = (state.activities[dayId] || []).slice();
+  return acts.sort(function(a,b){
+    if (!a.time && !b.time) return 0;
+    if (!a.time) return 1;
+    if (!b.time) return -1;
+    return a.time.localeCompare(b.time);
+  });
+}
+
+function makeActCard(a, dayId) {
+  var m = MEMBERS.find(function(x){ return x.name === a.person; }) || { color:'#C4622D', light:'#F0D4C4', dark:'#8B3D18' };
+  var div = document.createElement('div');
+  div.className = 'act-card';
+  div.style.cssText = 'background:' + m.light + ';border-color:' + m.color + '66;color:' + m.dark;
+  var inner = '';
+  inner += '<button class="act-del-btn" style="color:' + m.dark + '" onclick="deleteActivity(\'' + dayId + '\',' + a.id + ')">✕</button>';
+  if (a.time) inner += '<div class="act-time">' + esc(a.time) + '</div>';
+  inner += '<div class="act-title">' + esc(a.title) + '</div>';
+  if (a.notes) inner += '<div class="act-notes">' + esc(a.notes) + '</div>';
+  inner += '<div class="act-footer">';
+  if (a.person) inner += '<span class="act-person-tag" style="background:' + m.color + '">' + esc(a.person) + '</span>';
+  inner += '<button class="act-edit-btn" style="border-color:' + m.color + '55;color:' + m.dark + '" onclick="openEdit(\'' + dayId + '\',' + a.id + ')">✏ Bewerken</button>';
+  inner += '</div>';
+  div.innerHTML = inner;
+  return div;
+}
+
+// ─── Modal ───────────────────────────────────────────────────────────────────
+function openAdd(dayId) {
+  if (!activePerson) return;
+  document.getElementById('modalTitle').textContent = 'Activiteit toevoegen';
+  document.getElementById('modalDay').value = dayId;
+  document.getElementById('modalEditId').value = '';
+  document.getElementById('actTitle').value = '';
+  document.getElementById('actTime').value = '';
+  document.getElementById('actNotes').value = '';
+  modalPerson = activePerson;
+  buildModalPersonBtns();
+  document.getElementById('modalBg').classList.add('open');
+  setTimeout(function(){ document.getElementById('actTitle').focus(); }, 100);
+}
+function openEdit(dayId, id) {
+  var a = (state.activities[dayId] || []).find(function(x){ return x.id === id; });
+  if (!a) return;
+  document.getElementById('modalTitle').textContent = 'Bewerken';
+  document.getElementById('modalDay').value = dayId;
+  document.getElementById('modalEditId').value = id;
+  document.getElementById('actTitle').value = a.title;
+  document.getElementById('actTime').value = a.time || '';
+  document.getElementById('actNotes').value = a.notes || '';
+  modalPerson = a.person || '';
+  buildModalPersonBtns();
+  document.getElementById('modalBg').classList.add('open');
+}
+function closeModal() {
+  document.getElementById('modalBg').classList.remove('open');
+}
+function buildModalPersonBtns() {
+  var c = document.getElementById('modalPersonBtns');
+  c.innerHTML = '';
+  MEMBERS.forEach(function(m) {
+    var b = document.createElement('button');
+    b.className = 'person-btn';
+    b.textContent = m.name;
+    b.id = 'mpb-' + m.name;
+    if (modalPerson === m.name) b.style.cssText = 'background:' + m.color + ';border-color:' + m.color + ';color:#fff';
+    b.onclick = function() {
+      modalPerson = (modalPerson === m.name) ? '' : m.name;
+      buildModalPersonBtns();
+    };
+    c.appendChild(b);
+  });
+}
+function saveActivity() {
+  var title = document.getElementById('actTitle').value.trim();
+  if (!title) { document.getElementById('actTitle').focus(); return; }
+  var dayId = document.getElementById('modalDay').value;
+  var editId = parseInt(document.getElementById('modalEditId').value) || null;
+  var time = document.getElementById('actTime').value.trim();
+  var notes = document.getElementById('actNotes').value.trim();
+  if (!state.activities[dayId]) state.activities[dayId] = [];
+  if (editId) {
+    state.activities[dayId] = state.activities[dayId].map(function(a){
+      return a.id === editId ? { id:a.id, title:title, time:time, notes:notes, person:modalPerson } : a;
+    });
+  } else {
+    state.activities[dayId].push({ id:Date.now(), title:title, time:time, notes:notes, person:modalPerson });
+  }
+  closeModal();
+  renderActiveDay();
+  saveToCloud();
+}
+function deleteActivity(dayId, id) {
+  state.activities[dayId] = (state.activities[dayId] || []).filter(function(a){ return a.id !== id; });
+  renderActiveDay();
+  saveToCloud();
+}
+
+// ─── Title editing ───────────────────────────────────────────────────────────
+function startEditTitle(dayId) {
+  var row = document.getElementById('titlerow-' + dayId);
+  var editrow = document.getElementById('titleedit-' + dayId);
+  var inp = document.getElementById('titleinput-' + dayId);
+  var d = DAYS.find(function(x){ return x.id === dayId; });
+  inp.value = state.dayTitles[dayId] || d.defaultTitle || '';
+  row.style.display = 'none';
+  editrow.style.display = 'flex';
+  inp.focus();
+}
+function saveTitle(dayId) {
+  var inp = document.getElementById('titleinput-' + dayId);
+  var v = inp.value.trim();
+  var d = DAYS.find(function(x){ return x.id === dayId; });
+  if (v && v !== d.defaultTitle) state.dayTitles[dayId] = v;
+  else delete state.dayTitles[dayId];
+  document.getElementById('titlerow-' + dayId).style.display = 'flex';
+  document.getElementById('titleedit-' + dayId).style.display = 'none';
+  renderActiveDay();
+  saveToCloud();
+}
+
+// ─── HTML templates ───────────────────────────────────────────────────────────
+function arrivalHTML() {
+  return '<span class="day-badge badge-arrival">Aankomstdag</span>'
+    + '<div class="day-title-row"><h2>Amsterdam → Terrasini</h2></div>'
+    + '<div class="day-sub">Zondag 16 augustus</div>'
+    + '<div class="flight-block"><div class="fbl">Vlucht HV5227 · Transavia · PNR: UFUBVG</div><div class="fbr"><div><div class="fbt">18:55</div><div class="fbm">AMS</div></div><div class="fba">→</div><div><div class="fbt">21:30</div><div class="fbm">PMO</div></div><div style="margin-left:auto;font-size:12px;color:rgba(255,255,255,.38)">2u 35m</div></div></div>'
+    + '<div class="transfer"><div class="tr"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg><span>Schiphol: aanwezig uiterlijk 16:55 (2u voor vertrek)</span></div><div class="tr"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99z"/></svg><span>Na landing: huurauto ophalen → ~30 min rijden naar Terrasini via A29</span></div><div class="tr"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span>Check-in: vanaf 15:00 — aankomst verwacht ~22:30</span></div></div>'
+    + '<div id="acts-d0"></div>'
+    + '<button class="add-btn" id="addbtn-d0" style="display:none" onclick="openAdd(\'d0\')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>Activiteit of notitie toevoegen</button>'
+    + '<div class="no-who" id="nowho-d0">Kies eerst je naam bovenaan om iets toe te voegen.</div>';
+}
+
+function freeDayHTML(d) {
+  return '<span class="day-badge badge-free">Vrije dag</span>'
+    + '<div class="day-title-row" id="titlerow-' + d.id + '">'
+    +   '<h2 id="title-' + d.id + '">' + esc(d.defaultTitle) + '</h2>'
+    +   '<button class="edit-title-btn" onclick="startEditTitle(\'' + d.id + '\')" title="Naam aanpassen"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></button>'
+    + '</div>'
+    + '<div class="title-edit-row" id="titleedit-' + d.id + '" style="display:none">'
+    +   '<input type="text" id="titleinput-' + d.id + '" onkeydown="if(event.key===\'Enter\'||event.key===\'Escape\')saveTitle(\'' + d.id + '\')">'
+    +   '<button onclick="saveTitle(\'' + d.id + '\')">Ok</button>'
+    + '</div>'
+    + (d.sub ? '<div class="day-sub">' + esc(d.sub) + '</div>' : '<div class="day-sub"></div>')
+    + '<div class="empty-day" id="empty-' + d.id + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg><p>Nog niets gepland.<br>Voeg de eerste activiteit toe hieronder.</p></div>'
+    + '<div id="acts-' + d.id + '"></div>'
+    + '<button class="add-btn" id="addbtn-' + d.id + '" style="display:none" onclick="openAdd(\'' + d.id + '\')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>Activiteit of notitie toevoegen</button>'
+    + '<div class="no-who" id="nowho-' + d.id + '">Kies eerst je naam bovenaan om iets toe te voegen.</div>';
+}
+
+function departureHTML() {
+  return '<span class="day-badge badge-departure">Vertrekdag</span>'
+    + '<div class="day-title-row"><h2>Palermo → Amsterdam</h2></div>'
+    + '<div class="day-sub">Dinsdag 25 augustus</div>'
+    + '<div class="warning"><strong>Let op:</strong> Check-out is om 10:00, maar je vlucht vertrekt om 09:10. Vertrek rond 05:45. Regel dit de avond tevoren — bagage en sleutels van tevoren afgeven aan de host.</div>'
+    + '<div class="flight-block"><div class="fbl">Vlucht HV5230 · Transavia · PNR: UFUBVG</div><div class="fbr"><div><div class="fbt">09:10</div><div class="fbm">PMO</div></div><div class="fba">→</div><div><div class="fbt">12:00</div><div class="fbm">AMS</div></div><div style="margin-left:auto;font-size:12px;color:rgba(255,255,255,.38)">2u 50m</div></div></div>'
+    + '<div class="transfer"><div class="tr"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg><span>Vertrek accommodatie: ~05:45</span></div><div class="tr"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99z"/></svg><span>Huurauto inleveren + inchecken: aanwezig om ~07:00</span></div><div class="tr"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg><span>Aankomst Amsterdam Schiphol: 12:00</span></div></div>'
+    + '<div id="acts-d9"></div>'
+    + '<button class="add-btn" id="addbtn-d9" style="display:none" onclick="openAdd(\'d9\')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>Notitie toevoegen</button>'
+    + '<div class="no-who" id="nowho-d9">Kies eerst je naam bovenaan om iets toe te voegen.</div>';
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+document.getElementById('modalBg').addEventListener('click', function(e){ if(e.target===this) closeModal(); });
+document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeModal(); });
+
+
+// ─── PIN ─────────────────────────────────────────────────────────────────────
+var pinEntry = '';
+function pinPress(d) {
+  if (pinEntry.length >= 4) return;
+  pinEntry += d;
+  updatePinDots();
+  if (pinEntry.length === 4) checkPin();
+}
+function pinDel() { pinEntry = pinEntry.slice(0,-1); updatePinDots(); document.getElementById('pinError').textContent=''; }
+function pinClear() { pinEntry=''; updatePinDots(); document.getElementById('pinError').textContent=''; }
+function updatePinDots() {
+  for(var i=0;i<4;i++){
+    document.getElementById('pd'+i).className='pin-dot'+(i<pinEntry.length?' filled':'');
+  }
+}
+function checkPin() {
+  if (pinEntry === PIN_CODE) {
+    document.getElementById('pinOverlay').classList.add('hidden');
+    sessionStorage.setItem('sicily_pin_ok','1');
+    init();
+  } else {
+    document.getElementById('pinError').textContent='Onjuiste pincode, probeer opnieuw';
+    pinEntry='';
+    updatePinDots();
+  }
+}
+document.addEventListener('keydown', function(e){
+  if(document.getElementById('pinOverlay').classList.contains('hidden')) return;
+  if(e.key>='0'&&e.key<='9') pinPress(e.key);
+  if(e.key==='Backspace') pinDel();
+});
+if(sessionStorage.getItem('sicily_pin_ok')==='1'){
+  document.getElementById('pinOverlay').classList.add('hidden');
+  // init() called below
+} else {
+  // wait for correct PIN before init()
+  document.addEventListener('DOMContentLoaded',function(){});
+}
+
+if(sessionStorage.getItem('sicily_pin_ok')==='1') init();
+</script>
+
+<div class="pin-overlay" id="pinOverlay">
+  <div class="pin-box">
+    <h2>Sicilia <em style="font-style:italic;color:#C4622D">bella</em></h2>
+    <p>Voer de pincode in om de planning te openen</p>
+    <div class="pin-dots">
+      <div class="pin-dot" id="pd0"></div>
+      <div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div>
+      <div class="pin-dot" id="pd3"></div>
+    </div>
+    <div class="pin-grid">
+      <button class="pin-key" onclick="pinPress('1')">1</button>
+      <button class="pin-key" onclick="pinPress('2')">2</button>
+      <button class="pin-key" onclick="pinPress('3')">3</button>
+      <button class="pin-key" onclick="pinPress('4')">4</button>
+      <button class="pin-key" onclick="pinPress('5')">5</button>
+      <button class="pin-key" onclick="pinPress('6')">6</button>
+      <button class="pin-key" onclick="pinPress('7')">7</button>
+      <button class="pin-key" onclick="pinPress('8')">8</button>
+      <button class="pin-key" onclick="pinPress('9')">9</button>
+      <button class="pin-key del" onclick="pinDel()">&#9003;</button>
+      <button class="pin-key" onclick="pinPress('0')">0</button>
+      <button class="pin-key del" onclick="pinClear()">C</button>
+    </div>
+    <div class="pin-error" id="pinError"></div>
+  </div>
+</div>
+
+</body>
+</html>
